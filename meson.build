@@ -1,5 +1,8 @@
 project('neovim-dark-monitor', 'cpp', default_options : [ 'cpp_std=c++20' ])
 
+# FIXME: comment this line out. it is needed only to fix clangd errors
+add_global_arguments('-includesrc/shared_pch.hpp', language : 'cpp')
+
 boost_dep = dependency('boost', modules: ['program_options'])
 
 # TODO: add them as submodules?
@@ -10,6 +13,9 @@ msgpack_dep = dependency('msgpack-cxx')
 sources = [
   'src/main.cpp',
 
+  'src/monitor/neovim/client.cpp',
+
+  'src/monitor/service/neovim.cpp',
   'src/monitor/service/inventory.cpp',
   'src/monitor/service/singleton.cpp',
 

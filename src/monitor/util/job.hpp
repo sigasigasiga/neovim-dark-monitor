@@ -41,7 +41,8 @@ public:
     return *job_ptr;
   }
 
-public:
+  auto range() const { return jobs_ | ranges::views::indirect; }
+
 private:
   using job_list_t = std::list<std::unique_ptr<T>>;
   using job_handle_t = job_list_t::const_iterator;

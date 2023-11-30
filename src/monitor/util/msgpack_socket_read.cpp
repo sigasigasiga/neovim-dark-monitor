@@ -13,7 +13,7 @@ void msgpack_socket_read_t::async_read() {
   unpacker_.reserve_buffer(window_size);
   socket_.async_read_some(
       boost::asio::buffer(unpacker_.buffer(), window_size),
-      std::bind_front(&msgpack_socket_read_t::handle_read, this));
+      wrap(std::bind_front(&msgpack_socket_read_t::handle_read, this)));
 }
 
 void msgpack_socket_read_t::handle_read(const boost::system::error_code &ec,
