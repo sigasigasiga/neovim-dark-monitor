@@ -28,11 +28,11 @@ private:
 template <typename... RpcArgs>
 void client_t::send_request(std::string_view method_name,
                             const RpcArgs &...args) {
-  spdlog::debug("Sending {} to neovim", method_name);
   msgpack::sbuffer buf;
   msgpack::packer packer{buf};
-  packer << msg_type_t::request << message_id_++ << method_name;
-  (packer << ... << args);
+  auto cmd = std::make_tuple(msg_type_t::request, message_id_++, method_name,
+                             std::cref(args)...);
+  packer.pack(cmd);
 
   buffer_queue_.push_back(std::move(buf));
   if (buffer_queue_.size() == 1) {
