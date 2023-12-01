@@ -1,0 +1,3 @@
+[submodule "dependencies/libdarknotify"]
+	path = subprojects/libdarknotify
+	url = git@github.com:sigasigasiga/libdarknotify.git

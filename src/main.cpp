@@ -9,7 +9,9 @@
 
 namespace monitor {
 
-std::string make_socket_filename() {
+namespace {
+
+std::string make_singleton_socket_filename() {
   return fmt::format("neovim-dark-monitor.{}.sock", ::geteuid());
 }
 
@@ -26,13 +28,14 @@ std::filesystem::path make_runtime_path() {
   }
 }
 
-std::filesystem::path make_socket_path() {
-  return make_runtime_path() / make_socket_filename();
+std::filesystem::path make_singleton_socket_path() {
+  return make_runtime_path() / make_singleton_socket_filename();
 }
 
 std::string get_nvim_socket() {
-  char *nvim_socket_path = std::getenv("NVIM");
+  const char *nvim_socket_path = std::getenv("NVIM");
   if (nvim_socket_path) {
+    spdlog::debug("Using NVIM={}", nvim_socket_path);
     return nvim_socket_path;
   } else {
     throw util::error_t::not_nvim_job;
@@ -61,14 +64,14 @@ boost::program_options::variables_map parse_command_line(int argc,
 class application_t : public singleton::client_t::state_dumper_t {
 public:
   application_t(int argc, const char *argv[])
-      : cmd_line_{parse_command_line(argc, argv)}, nvim_socket_{
+      : cmd_line_{parse_command_line(argc, argv)}, nvim_socket_path_{
                                                        get_nvim_socket()} {}
 
 public:
   void run() {
     boost::asio::local::stream_protocol::socket client_mode_socket{io_};
     boost::asio::local::stream_protocol::endpoint singleton_endpoint{
-        make_socket_path().string()};
+        make_singleton_socket_path().string()};
 
     boost::system::error_code ec;
     client_mode_socket.connect(singleton_endpoint, ec);
@@ -77,8 +80,15 @@ public:
                   ENOENT, boost::asio::error::get_system_category()}) {
       spdlog::info("Singleton server is not active ({}): {}", ec.value(),
                    ec.message());
+
+      boost::asio::local::stream_protocol::endpoint nvim_endpoint{
+          nvim_socket_path_};
+      boost::asio::local::stream_protocol::socket nvim_socket{io_};
+      nvim_socket.connect(nvim_endpoint);
+
       auto &inv = state_.emplace<util::inventory_t>(service::make_inventory(
-          io_.get_executor(), std::move(singleton_endpoint), nvim_socket_));
+          io_.get_executor(), std::move(singleton_endpoint),
+          std::move(nvim_socket)));
 
       inv.reload(); // TODO: when do we reload?
     } else if (ec) {
@@ -95,7 +105,7 @@ public:
 private: // singleton::client_t::state_dumper_t
   msgpack::sbuffer dump_state() final {
     msgpack::sbuffer buf;
-    msgpack::pack(buf, nvim_socket_);
+    msgpack::pack(buf, nvim_socket_path_);
     return buf;
   }
 
@@ -103,8 +113,10 @@ private:
   boost::asio::io_context io_;
   boost::program_options::variables_map cmd_line_;
   std::variant<std::monostate, singleton::client_t, util::inventory_t> state_;
-  const std::string nvim_socket_;
+  const std::string nvim_socket_path_;
 };
+
+} // anonymous namespace
 
 } // namespace monitor
 

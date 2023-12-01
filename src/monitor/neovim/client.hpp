@@ -13,7 +13,7 @@ public:
 
 public:
   template <typename... RpcArgs>
-  void send_request(std::string_view method_name, RpcArgs &&...args);
+  void send_request(std::string_view method_name, const RpcArgs &...args);
 
 private:
   void process_queue();
@@ -26,7 +26,9 @@ private:
 };
 
 template <typename... RpcArgs>
-void client_t::send_request(std::string_view method_name, RpcArgs &&...args) {
+void client_t::send_request(std::string_view method_name,
+                            const RpcArgs &...args) {
+  spdlog::debug("Sending {} to neovim", method_name);
   msgpack::sbuffer buf;
   msgpack::packer packer{buf};
   packer << msg_type_t::request << message_id_++ << method_name;

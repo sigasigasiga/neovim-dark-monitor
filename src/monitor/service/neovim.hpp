@@ -15,7 +15,7 @@ public:
            boost::asio::generic::stream_protocol::socket current_client);
 
 public:
-  auto clients() const { return clients_.range(); }
+  const auto &clients() const { return clients_; }
 
 private: // singleton::server_t::msg_handler_t
   void on_client_msg(msgpack::object_handle handle) final;
