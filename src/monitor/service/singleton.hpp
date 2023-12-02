@@ -6,17 +6,14 @@
 
 namespace monitor::service {
 
-class singleton_t : public util::service_t,
-                    public singleton::server_t::msg_handler_t {
+class singleton_t : public util::service_t {
 public:
   singleton_t(boost::asio::any_io_executor exec,
-              boost::asio::local::stream_protocol::endpoint ep);
+              boost::asio::local::stream_protocol::endpoint ep,
+              singleton::server_t::msg_handler_t &msg_handler);
 
 private: // util::service_t
   void reload() final;
-
-private: // singleton::server_t::msg_handler_t
-  void on_client_msg(msgpack::object_handle handle) final;
 
 private:
   util::first_flag_t first_;
