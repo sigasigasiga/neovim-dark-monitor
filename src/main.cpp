@@ -1,8 +1,9 @@
 #include <unistd.h>
 
-#include <boost/program_options.hpp>
+#include <siga/dark_notify/dark_notify.hpp>
 
 #include "monitor/service/inventory.hpp"
+#include "monitor/service/neovim.hpp"
 #include "monitor/singleton/client.hpp"
 #include "monitor/util/error.hpp"
 #include "monitor/util/inventory.hpp"
@@ -42,6 +43,12 @@ std::string get_nvim_socket() {
   }
 }
 
+service::neovim_t::dark_notifier_t::appearance_t
+convert_appearance(siga::dark_notify::dark_notify_t::appearance_t appearance) {
+  return static_cast<service::neovim_t::dark_notifier_t::appearance_t>(
+      appearance);
+}
+
 boost::program_options::variables_map parse_command_line(int argc,
                                                          const char *argv[]) {
   namespace po = boost::program_options;
@@ -61,14 +68,49 @@ boost::program_options::variables_map parse_command_line(int argc,
   return ret;
 }
 
-class application_t : public singleton::client_t::state_dumper_t {
+class application_t : public singleton::client_t::state_dumper_t,
+                      public service::neovim_t::dark_notifier_t {
 public:
   application_t(int argc, const char *argv[])
-      : cmd_line_{parse_command_line(argc, argv)}, nvim_socket_path_{
+      : notifier_{siga::dark_notify::make_default_notifier()},
+        cmd_line_{parse_command_line(argc, argv)}, nvim_socket_path_{
                                                        get_nvim_socket()} {}
 
 public:
   void run() {
+    make_state();
+
+    auto io_fut = std::async(std::launch::async, [this] { io_.run(); });
+
+    auto theme_cb = [this](auto appearance) {
+      boost::asio::post(io_, std::bind_front(std::ref(on_theme_change_),
+                                             convert_appearance(appearance)));
+    };
+
+    theme_cb(notifier_->query());
+    notifier_->register_callback(theme_cb);
+    notifier_->run();
+
+    io_fut.wait();
+  }
+
+private: // singleton::client_t::state_dumper_t
+  msgpack::sbuffer dump_state() final {
+    msgpack::sbuffer buf;
+    msgpack::pack(buf, nvim_socket_path_);
+    return buf;
+  }
+
+private: // service::neovim_t::dark_notifier_t
+  appearance_t query() final { return convert_appearance(notifier_->query()); }
+
+  boost::signals2::scoped_connection
+  subscribe(boost::signals2::slot<void(appearance_t)> slot) final {
+    return on_theme_change_.connect(std::move(slot));
+  }
+
+private:
+  void make_state() {
     boost::asio::local::stream_protocol::socket client_mode_socket{io_};
     boost::asio::local::stream_protocol::endpoint singleton_endpoint{
         make_singleton_socket_path().string()};
@@ -88,9 +130,9 @@ public:
 
       auto &inv = state_.emplace<util::inventory_t>(service::make_inventory(
           io_.get_executor(), std::move(singleton_endpoint),
-          std::move(nvim_socket)));
+          std::move(nvim_socket), *this));
 
-      inv.reload(); // TODO: when do we reload?
+      boost::asio::post(io_, [&inv] { inv.reload(); });
     } else if (ec) {
       throw boost::system::system_error{ec,
                                         "Cannot connect to the server socket"};
@@ -98,22 +140,17 @@ public:
       spdlog::info("Starting the client at {}", singleton_endpoint.path());
       state_.emplace<singleton::client_t>(*this, std::move(client_mode_socket));
     }
-
-    io_.run();
-  }
-
-private: // singleton::client_t::state_dumper_t
-  msgpack::sbuffer dump_state() final {
-    msgpack::sbuffer buf;
-    msgpack::pack(buf, nvim_socket_path_);
-    return buf;
   }
 
 private:
   boost::asio::io_context io_;
+  const std::unique_ptr<siga::dark_notify::dark_notify_t> notifier_;
+
   boost::program_options::variables_map cmd_line_;
   std::variant<std::monostate, singleton::client_t, util::inventory_t> state_;
   const std::string nvim_socket_path_;
+
+  boost::signals2::signal<void(appearance_t)> on_theme_change_;
 };
 
 } // anonymous namespace

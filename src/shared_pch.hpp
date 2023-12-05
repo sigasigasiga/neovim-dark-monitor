@@ -18,6 +18,7 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <future>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -30,6 +31,8 @@
 
 // thirdparty
 #include <boost/asio.hpp>
+#include <boost/program_options.hpp>
+#include <boost/signals2.hpp>
 #include <msgpack.hpp>
 #include <range/v3/all.hpp>
 #include <spdlog/spdlog.h>
