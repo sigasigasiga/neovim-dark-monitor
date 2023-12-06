@@ -89,8 +89,11 @@ void monitor_t::handle_signal(const boost::system::error_code &ec,
   }
 
   spdlog::info("Got signal {}", signal_number);
-  notifier_->stop();
-  io_.stop();
+  inventory_.stop([this] {
+    spdlog::info("The inventory has stopped");
+    notifier_->stop();
+    io_.stop();
+  });
 }
 
 } // namespace monitor::application

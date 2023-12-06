@@ -42,7 +42,7 @@ void inventory_t::stop(std::function<void()> callback) {
 
   for (const auto &service : services_) {
     if (auto stoppable = dynamic_cast<stoppable_service_t *>(service.get())) {
-      stoppable->stop(stop_callback_t{exec_, callback, ++stop_count_});
+      stoppable->stop(stop_callback_t{exec_, stop_callback_, ++stop_count_});
     }
   }
 
