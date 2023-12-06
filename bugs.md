@@ -1,4 +1,3 @@
-* New neovim clients must receive their new theme whenever they are connected to the singleton server
 * Singleton server must be stopped when there are no neovim clients left
 * Sometimes there is some strange unhandled exception (something about `std::thread::join`) when a singleton client connects to the singleton server
 * Remove singleton server socket file when the program is about to close
