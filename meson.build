@@ -16,6 +16,10 @@ darknotify_dep = darknotify_proj.get_variable('darknotify_dep')
 sources = [
   'src/main.cpp',
 
+  'src/monitor/application/application.cpp',
+  'src/monitor/application/monitor.cpp',
+  'src/monitor/application/singleton_client.cpp',
+
   'src/monitor/neovim/client.cpp',
 
   'src/monitor/service/inventory.cpp',
