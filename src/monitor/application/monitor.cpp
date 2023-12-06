@@ -51,6 +51,8 @@ monitor_t::monitor_t(const std::string &singleton_endpoint,
 void monitor_t::run() {
   auto io_fut = std::async(std::launch::async, [this] { io_.run(); });
 
+  signal_set_.add(SIGINT);
+  signal_set_.add(SIGTERM);
   signal_set_.async_wait(
       wrap(std::bind_front(&monitor_t::handle_signal, this)));
 
