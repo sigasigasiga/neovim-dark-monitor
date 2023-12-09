@@ -2,7 +2,7 @@
 
 #include "monitor/util/callback_wrapper.hpp"
 
-namespace monitor::util {
+namespace monitor::util::asio {
 
 class msgpack_socket_read_t : private callback_wrapper_t {
 public:
@@ -27,4 +27,4 @@ private:
   msgpack::unpacker unpacker_;
 };
 
-} // namespace monitor::util
+} // namespace monitor::util::asio

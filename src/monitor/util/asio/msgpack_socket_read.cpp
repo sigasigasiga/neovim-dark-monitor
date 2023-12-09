@@ -1,6 +1,6 @@
-#include "monitor/util/msgpack_socket_read.hpp"
+#include "monitor/util/asio/msgpack_socket_read.hpp"
 
-namespace monitor::util {
+namespace monitor::util::asio {
 
 msgpack_socket_read_t::msgpack_socket_read_t(
     delegate_t &delegate, boost::asio::generic::stream_protocol::socket socket)
@@ -31,4 +31,4 @@ void msgpack_socket_read_t::handle_read(const boost::system::error_code &ec,
   async_read();
 }
 
-} // namespace monitor::util
+} // namespace monitor::util::asio

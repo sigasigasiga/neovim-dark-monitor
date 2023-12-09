@@ -20,6 +20,7 @@ public:
   int run() noexcept;
 
 private:
+  const boost::program_options::options_description options_description_;
   const boost::program_options::variables_map cmd_line_;
   const std::string singleton_socket_;
   const std::string nvim_socket_;

@@ -31,7 +31,10 @@ sources = [
   'src/monitor/singleton/server.cpp',
 
   'src/monitor/util/inventory.cpp',
-  'src/monitor/util/msgpack_socket_read.cpp',
+
+  'src/monitor/util/asio/msgpack_socket_read.cpp',
+
+  'src/monitor/util/os/user.cpp',
 ]
 
 executable(

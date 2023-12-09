@@ -7,10 +7,10 @@ namespace monitor::singleton {
 client_handler_t::client_handler_t(
     std::unique_ptr<job_t::delegate_t> job_delegate, msg_handler_t &msg_handler,
     boost::asio::generic::stream_protocol::socket client_socket)
-    : job_t{std::move(job_delegate)},
-      msg_handler_{msg_handler}, reader_{*this, std::move(client_socket)} {}
+    : job_t{std::move(job_delegate)}, msg_handler_{msg_handler},
+      reader_{*this, std::move(client_socket)} {}
 
-// util::msgpack_socket_read_t::delegate_t
+// util::asio::msgpack_socket_read_t::delegate_t
 void client_handler_t::on_message_received(msgpack::object_handle handle) {
   msg_handler_.on_client_msg(std::move(handle));
 }
