@@ -6,36 +6,42 @@ namespace monitor::neovim {
 
 client_t::client_t(std::unique_ptr<job_t::delegate_t> job_delegate,
                    boost::asio::generic::stream_protocol::socket socket)
-    : job_t{std::move(job_delegate)}, socket_{std::move(socket)} {}
+    : job_t{std::move(job_delegate)}, socket_{std::move(socket)},
+      reader_{*this, socket_}, writer_{*this, socket_} {}
 
-void client_t::process_queue() {
-  assert(!buffer_queue_.empty());
-  const auto &current_buffer = buffer_queue_.front();
-  boost::asio::async_write(
-      socket_,
-      boost::asio::buffer(current_buffer.data(), current_buffer.size()),
-      wrap(std::bind_front(&client_t::handle_write, this)));
+// util::asio::msgpack_socket_read_t<>::delegate_t,
+void client_t::on_message_received(msgpack::object_handle handle) {
+  // TODO: forward this information to the callback
+  std::ostringstream oss;
+  oss << handle.get();
+  spdlog::info("got message {}", oss.str());
 }
 
-void client_t::handle_write(const boost::system::error_code &ec,
-                            std::size_t bytes) {
-  buffer_queue_.pop_front();
+void client_t::on_read_error(const boost::system::error_code &ec) {
+  assert(ec);
 
-  if (ec) {
-    if (util::is_disconnected(ec)) {
-      spdlog::info("The client has disconnected");
-    } else {
-      spdlog::error("Cannot write to the nvim socket: {} ({})", ec.message(),
-                    ec.value());
-    }
-
-    return job_finished();
+  if (util::is_disconnected(ec)) {
+    spdlog::info("The client has disconnected");
+  } else {
+    spdlog::error("Cannot read from the nvim socket: {} ({})", ec.message(),
+                  ec.value());
   }
 
-  spdlog::debug("{} bytes has written", bytes);
-  if (!buffer_queue_.empty()) {
-    process_queue();
+  job_finished();
+}
+
+// util::asio::msgpack_socket_write_t<>::delegate_t
+void client_t::on_write_error(const boost::system::error_code &ec) {
+  assert(ec);
+
+  if (util::is_disconnected(ec)) {
+    spdlog::info("The client has disconnected");
+  } else {
+    spdlog::error("Cannot write to the nvim socket: {} ({})", ec.message(),
+                  ec.value());
   }
+
+  return job_finished();
 }
 
 } // namespace monitor::neovim

@@ -32,8 +32,6 @@ sources = [
 
   'src/monitor/util/inventory.cpp',
 
-  'src/monitor/util/asio/msgpack_socket_read.cpp',
-
   'src/monitor/util/os/user.cpp',
 ]
 
