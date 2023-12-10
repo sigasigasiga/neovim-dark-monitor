@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "monitor/application/monitor.hpp"
-#include "monitor/application/singleton_client.hpp"
+#include "monitor/application/mode/monitor.hpp"
+#include "monitor/application/mode/singleton_client.hpp"
 #include "monitor/util/error.hpp"
 #include "monitor/util/os/user.hpp"
 
@@ -86,12 +86,12 @@ int application_t::run() noexcept try {
 
   spdlog::info("Using {} neovim socket", nvim_socket_);
 
-  if (auto c =
-          std::make_unique<singleton_client_t>(singleton_socket_, nvim_socket_);
+  if (auto c = std::make_unique<mode::singleton_client_t>(singleton_socket_,
+                                                          nvim_socket_);
       c->try_client_mode()) {
     state_ = std::move(c);
   } else {
-    state_ = std::make_unique<monitor_t>(singleton_socket_, nvim_socket_);
+    state_ = std::make_unique<mode::monitor_t>(singleton_socket_, nvim_socket_);
   }
 
   assert(state_);

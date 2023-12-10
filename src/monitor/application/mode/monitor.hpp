@@ -6,7 +6,7 @@
 #include "monitor/service/neovim.hpp"
 #include "monitor/util/inventory.hpp"
 
-namespace monitor::application {
+namespace monitor::application::mode {
 
 class monitor_t : public application_t::mode_t,
                   public service::neovim_t::dark_notifier_t,
@@ -38,4 +38,4 @@ private:
   util::inventory_t inventory_;
 };
 
-} // namespace monitor::application
+} // namespace monitor::application::mode

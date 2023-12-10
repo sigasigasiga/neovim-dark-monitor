@@ -1,6 +1,6 @@
-#include "monitor/application/singleton_client.hpp"
+#include "monitor/application/mode/singleton_client.hpp"
 
-namespace monitor::application {
+namespace monitor::application::mode {
 
 singleton_client_t::singleton_client_t(const std::string &singleton_socket,
                                        const std::string &nvim_socket)
@@ -44,4 +44,4 @@ msgpack::sbuffer singleton_client_t::dump_state() {
   return buf;
 }
 
-} // namespace monitor::application
+} // namespace monitor::application::mode

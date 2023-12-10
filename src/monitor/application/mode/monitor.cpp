@@ -1,9 +1,9 @@
-#include "monitor/application/monitor.hpp"
+#include "monitor/application/mode/monitor.hpp"
 
 #include "monitor/service/inventory.hpp"
 #include "monitor/util/asio/endpoint.hpp"
 
-namespace monitor::application {
+namespace monitor::application::mode {
 
 namespace {
 
@@ -100,4 +100,4 @@ void monitor_t::handle_signal(const boost::system::error_code &ec,
   });
 }
 
-} // namespace monitor::application
+} // namespace monitor::application::mode

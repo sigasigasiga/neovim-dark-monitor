@@ -3,7 +3,7 @@
 #include "monitor/application/application.hpp"
 #include "monitor/singleton/client.hpp"
 
-namespace monitor::application {
+namespace monitor::application::mode {
 
 class singleton_client_t : public application_t::mode_t,
                            public singleton::client_t::state_dumper_t,
@@ -32,4 +32,4 @@ private:
   const std::string &nvim_socket_;
 };
 
-} // namespace monitor::application
+} // namespace monitor::application::mode

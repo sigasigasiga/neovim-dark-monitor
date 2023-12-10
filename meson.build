@@ -17,8 +17,8 @@ sources = [
   'src/main.cpp',
 
   'src/monitor/application/application.cpp',
-  'src/monitor/application/monitor.cpp',
-  'src/monitor/application/singleton_client.cpp',
+  'src/monitor/application/mode/monitor.cpp',
+  'src/monitor/application/mode/singleton_client.cpp',
 
   'src/monitor/neovim/client.cpp',
 
