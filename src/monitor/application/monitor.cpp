@@ -1,6 +1,7 @@
 #include "monitor/application/monitor.hpp"
 
 #include "monitor/service/inventory.hpp"
+#include "monitor/util/asio/endpoint.hpp"
 
 namespace monitor::application {
 
@@ -14,10 +15,13 @@ convert_appearance(siga::dark_notify::dark_notify_t::appearance_t appearance) {
 
 auto make_socket(boost::asio::any_io_executor exec,
                  const std::string &str_endpoint) {
-  boost::asio::local::stream_protocol::endpoint ep{str_endpoint};
-  boost::asio::local::stream_protocol::socket ret{exec};
-  ret.connect(ep);
-  return ret;
+  if (auto ep = util::asio::make_endpoint(str_endpoint)) {
+    boost::asio::generic::stream_protocol::socket ret{exec};
+    ret.connect(*ep);
+    return ret;
+  } else {
+    throw std::runtime_error{"Invalid neovim endpoint"};
+  }
 }
 
 class scoped_callback_register_t : private util::scoped_t {

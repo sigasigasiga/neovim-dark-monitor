@@ -32,6 +32,8 @@ sources = [
 
   'src/monitor/util/inventory.cpp',
 
+  'src/monitor/util/asio/endpoint.cpp',
+
   'src/monitor/util/os/user.cpp',
 ]
 
