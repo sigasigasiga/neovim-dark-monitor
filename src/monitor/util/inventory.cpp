@@ -30,6 +30,10 @@ inventory_t::inventory_t(boost::asio::any_io_executor exec,
     : exec_{std::move(exec)}, state_{std::in_place_type<service_list_t>,
                                      std::move(services)} {}
 
+bool inventory_t::active() const {
+  return std::holds_alternative<service_list_t>(state_);
+}
+
 void inventory_t::reload() {
   ranges::for_each(std::get<service_list_t>(state_), &service_t::reload);
   spdlog::info("The inventory was reloaded");

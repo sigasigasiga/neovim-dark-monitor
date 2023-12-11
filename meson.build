@@ -23,6 +23,7 @@ sources = [
   'src/monitor/neovim/client.cpp',
 
   'src/monitor/service/inventory.cpp',
+  'src/monitor/service/monitor.cpp',
   'src/monitor/service/neovim.cpp',
   'src/monitor/service/singleton.cpp',
 

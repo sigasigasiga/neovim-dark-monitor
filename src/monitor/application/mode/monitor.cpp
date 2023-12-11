@@ -7,10 +7,9 @@ namespace monitor::application::mode {
 
 namespace {
 
-service::neovim_t::dark_notifier_t::appearance_t
-convert_appearance(siga::dark_notify::dark_notify_t::appearance_t appearance) {
-  return static_cast<service::neovim_t::dark_notifier_t::appearance_t>(
-      appearance);
+auto convert_appearance(
+    siga::dark_notify::dark_notify_t::appearance_t appearance) {
+  return static_cast<service::monitor_t::notifier_t::appearance_t>(appearance);
 }
 
 auto make_socket(boost::asio::any_io_executor exec,
@@ -60,30 +59,25 @@ void monitor_t::run() {
   signal_set_.async_wait(
       wrap(std::bind_front(&monitor_t::handle_signal, this)));
 
-  auto theme_cb = [this](auto appearance) {
-    boost::asio::post(io_, std::bind_front(std::ref(on_theme_change_),
-                                           convert_appearance(appearance)));
-  };
-
   boost::asio::post(io_, [this] { inventory_.reload(); });
-  theme_cb(notifier_->query());
 
-  scoped_callback_register_t register_guard{*notifier_, theme_cb};
+  scoped_callback_register_t register_guard{
+      *notifier_, [this](auto appearance) {
+        boost::asio::post(io_, std::bind_front(std::ref(on_theme_change_),
+                                               convert_appearance(appearance)));
+      }};
   // `dark_notify_t::run` must be run on the main thread on macOS
   notifier_->run();
 
   io_fut.wait();
 }
 
-// service::neovim_t::dark_notifier_t,
+// service::monitor_t::notifier_t,
 auto monitor_t::query() -> appearance_t {
   return convert_appearance(notifier_->query());
 }
 
-boost::signals2::scoped_connection
-monitor_t::subscribe(boost::signals2::slot<void(appearance_t)> slot) {
-  return on_theme_change_.connect(std::move(slot));
-}
+auto monitor_t::signal() -> appearance_sig_t { return on_theme_change_; }
 
 // private
 void monitor_t::handle_signal(const boost::system::error_code &ec,
@@ -93,6 +87,11 @@ void monitor_t::handle_signal(const boost::system::error_code &ec,
   }
 
   spdlog::info("Got signal {}", signal_number);
+
+  if (!inventory_.active()) {
+    spdlog::info("The inventory is already stopping");
+  }
+
   inventory_.stop([this] {
     spdlog::info("The inventory has stopped");
     notifier_->stop();

@@ -3,13 +3,13 @@
 #include <siga/dark_notify/dark_notify.hpp>
 
 #include "monitor/application/application.hpp"
-#include "monitor/service/neovim.hpp"
+#include "monitor/service/monitor.hpp"
 #include "monitor/util/inventory.hpp"
 
 namespace monitor::application::mode {
 
 class monitor_t : public application_t::mode_t,
-                  public service::neovim_t::dark_notifier_t,
+                  public service::monitor_t::notifier_t,
                   private util::callback_wrapper_t,
                   private util::scoped_t {
 public:
@@ -19,11 +19,9 @@ public:
 private: // application_t::mode_t
   void run() final;
 
-private: // service::neovim_t::dark_notifier_t,
+private: // service::monitor_t::notifier_t,
   appearance_t query() final;
-
-  boost::signals2::scoped_connection
-  subscribe(boost::signals2::slot<void(appearance_t)> slot) final;
+  appearance_sig_t signal() final;
 
 private:
   void handle_signal(const boost::system::error_code &ec, int signal_number);

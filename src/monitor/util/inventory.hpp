@@ -10,6 +10,7 @@ public:
               std::list<std::unique_ptr<service_t>> services);
 
 public:
+  bool active() const;
   void reload();
   void stop(std::function<void()> callback);
 
