@@ -1,0 +1,6 @@
+# meson wrapdb seems to fill this folder with all the dependencies,
+# so we should ignore them
+*
+
+!.gitignore
+!libdarknotify/
