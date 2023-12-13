@@ -41,7 +41,7 @@ void client_t::on_write_error(const boost::system::error_code &ec) {
                   ec.value());
   }
 
-  return job_finished();
+  job_finished();
 }
 
 } // namespace monitor::neovim

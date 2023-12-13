@@ -9,8 +9,10 @@ util::inventory_t
 make_inventory(boost::asio::any_io_executor exec,
                boost::asio::local::stream_protocol::endpoint singleton_endpoint,
                boost::asio::generic::stream_protocol::socket nvim_socket,
-               monitor_t::notifier_t &notifier) {
-  auto neovim = std::make_unique<neovim_t>(exec, std::move(nvim_socket));
+               monitor_t::notifier_t &notifier,
+               neovim_t::delegate_t &neovim_delegate) {
+  auto neovim =
+      std::make_unique<neovim_t>(neovim_delegate, exec, std::move(nvim_socket));
   auto singleton = std::make_unique<singleton_t>(
       exec, std::move(singleton_endpoint), *neovim);
   auto monitor = std::make_unique<monitor_t>(notifier, neovim->clients(),

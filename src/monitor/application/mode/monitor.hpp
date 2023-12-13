@@ -4,12 +4,14 @@
 
 #include "monitor/application/application.hpp"
 #include "monitor/service/monitor.hpp"
+#include "monitor/service/neovim.hpp"
 #include "monitor/util/inventory.hpp"
 
 namespace monitor::application::mode {
 
 class monitor_t : public application_t::mode_t,
                   public service::monitor_t::notifier_t,
+                  public service::neovim_t::delegate_t,
                   private util::callback_wrapper_t,
                   private util::scoped_t {
 public:
@@ -23,8 +25,12 @@ private: // service::monitor_t::notifier_t,
   appearance_t query() final;
   appearance_sig_t signal() final;
 
+private: // service::neovim_t::delegate_t
+  void on_jobs_finished() final;
+
 private:
   void handle_signal(const boost::system::error_code &ec, int signal_number);
+  void stop();
 
 private:
   boost::asio::io_context io_;

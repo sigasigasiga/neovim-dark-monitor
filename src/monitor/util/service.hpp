@@ -7,7 +7,7 @@ public:
   virtual ~service_t() = default;
 
 public:
-  virtual void reload(){};
+  virtual void reload() {}
 };
 
 class stoppable_service_t : public service_t {

@@ -14,6 +14,8 @@ public:
   using sig_t = boost::signals2::signal<signature_t>;
 
 public:
+  // this constructor is implicit intentionally, such that it would be easier
+  // to return signal ref from a function
   signal_ref_t(sig_t &sig) : sig_{sig} {}
 
 public:

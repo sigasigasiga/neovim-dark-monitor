@@ -1,4 +1,3 @@
-* Singleton server must be stopped when there are no neovim clients left
 * Remove singleton server socket file when the program is about to close
 * Check `$XDG_SESSION_TYPE`. If it is equal to `tty`, then do not start anything. That should probably be implemented on Lua side, but it won't hurt to also check that in the program
 * Make use of command-line arguments

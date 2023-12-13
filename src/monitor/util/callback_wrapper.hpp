@@ -17,7 +17,7 @@ private:
   template <typename F> class wrap_t;
 
 public:
-  template <typename F> wrap_t<F> wrap(F func) {
+  template <typename F> wrap_t<F> wrap(F func) const {
     return wrap_t{std::move(func), cancelled_};
   }
   void cancel() { *cancelled_ = true; }
@@ -33,10 +33,10 @@ public:
 
 public:
   template <typename... Args> decltype(auto) operator()(Args &&...args) {
-    if (!*cancelled_) {
-      return std::invoke(func_, std::forward<Args>(args)...);
-    } else {
+    if (*cancelled_) {
       return std::invoke_result_t<F, Args &&...>();
+    } else {
+      return std::invoke(func_, std::forward<Args>(args)...);
     }
   }
 

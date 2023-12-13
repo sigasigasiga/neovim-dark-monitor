@@ -48,7 +48,10 @@ monitor_t::monitor_t(const std::string &singleton_endpoint,
     : notifier_{siga::dark_notify::make_default_notifier()}, signal_set_{io_},
       inventory_{service::make_inventory(
           io_.get_executor(), singleton_endpoint,
-          make_socket(io_.get_executor(), nvim_endpoint), *this)} {}
+          make_socket(io_.get_executor(), nvim_endpoint),
+          *this, // service::monitor_t::notifier_t
+          *this  // service::neovim_t::delegate_t
+          )} {}
 
 // application_t::mode_t
 void monitor_t::run() {
@@ -79,6 +82,12 @@ auto monitor_t::query() -> appearance_t {
 
 auto monitor_t::signal() -> appearance_sig_t { return on_theme_change_; }
 
+// service::neovim_t::delegate_t
+void monitor_t::on_jobs_finished() {
+  spdlog::info("All neovim jobs were finished");
+  stop();
+}
+
 // private
 void monitor_t::handle_signal(const boost::system::error_code &ec,
                               int signal_number) {
@@ -87,7 +96,10 @@ void monitor_t::handle_signal(const boost::system::error_code &ec,
   }
 
   spdlog::info("Got signal {}", signal_number);
+  stop();
+}
 
+void monitor_t::stop() {
   if (!inventory_.active()) {
     spdlog::info("The inventory is already stopping");
   }

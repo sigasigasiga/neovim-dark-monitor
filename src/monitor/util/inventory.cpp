@@ -2,29 +2,6 @@
 
 namespace monitor::util {
 
-namespace {
-
-class stop_callback_t {
-public:
-  stop_callback_t(boost::asio::any_io_executor exec,
-                  std::function<void()> &callback, std::uintmax_t &count)
-      : exec_{std::move(exec)}, callback_{&callback}, count_{&count} {}
-
-public:
-  void operator()() {
-    if (--(*count_) == 0) {
-      boost::asio::post(exec_, std::move(*callback_));
-    }
-  }
-
-private:
-  boost::asio::any_io_executor exec_;
-  std::function<void()> *callback_;
-  std::uintmax_t *count_;
-};
-
-} // anonymous namespace
-
 inventory_t::inventory_t(boost::asio::any_io_executor exec,
                          std::list<std::unique_ptr<service_t>> services)
     : exec_{std::move(exec)}, state_{std::in_place_type<service_list_t>,

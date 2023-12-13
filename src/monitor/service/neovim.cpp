@@ -4,9 +4,11 @@
 
 namespace monitor::service {
 
-neovim_t::neovim_t(boost::asio::any_io_executor exec,
+neovim_t::neovim_t(delegate_t &delegate, boost::asio::any_io_executor exec,
                    boost::asio::generic::stream_protocol::socket current_client)
-    : exec_{std::move(exec)} {
+    : delegate_{delegate}, exec_{std::move(exec)},
+      on_jobs_finished_{clients_.jobs_finished_sig().subscribe(
+          std::bind_front(&neovim_t::on_jobs_finished, this))} {
   clients_.make_job(std::move(current_client));
 }
 
@@ -36,6 +38,12 @@ void neovim_t::on_client_msg(msgpack::object_handle handle) {
   };
 
   socket_ref.async_connect(*endpoint, wrap(std::move(cb)));
+}
+
+// util::job_storage_t<neovim::client_t> signal handlers
+void neovim_t::on_jobs_finished() {
+  boost::asio::post(exec_, std::bind_front(&delegate_t::on_jobs_finished,
+                                           std::ref(delegate_)));
 }
 
 } // namespace monitor::service
