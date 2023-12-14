@@ -14,7 +14,7 @@ void client_t::on_message_received(msgpack::object_handle handle) {
   // TODO: forward this information to the callback
   std::ostringstream oss;
   oss << handle.get();
-  spdlog::info("got message {}", oss.str());
+  spdlog::debug("Got message {}", oss.str());
 }
 
 void client_t::on_read_error(const boost::system::error_code &ec) {

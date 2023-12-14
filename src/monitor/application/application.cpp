@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <fmt/format.h>
+
 #include "monitor/application/mode/monitor.hpp"
 #include "monitor/application/mode/singleton_client.hpp"
 #include "monitor/util/error.hpp"
@@ -11,17 +13,26 @@ namespace monitor::application {
 
 namespace {
 
-constexpr char help_opt[] = "help";
+constexpr char help_opt[] = "help,h";
 constexpr char nvim_sock_opt[] = "nvim-sock";
+constexpr char loglevel_opt[] = "loglevel";
 
 namespace po = boost::program_options;
 
+constexpr std::array loglevel_names = SPDLOG_LEVEL_NAMES;
+
 po::options_description make_options_description() {
+  static const auto loglevel_msg =
+      fmt::format("available options: {}", fmt::join(loglevel_names, ", "));
+
   po::options_description desc{"neovim-dark-monitor options"};
-  desc.add_options()                     //
-      (help_opt, "produce help message") //
-      (nvim_sock_opt, po::value<std::string>(),
-       "neovim socket (defaults to $NVIM)");
+  // clang-format off
+  desc.add_options()
+    (help_opt, "produce help message")
+    (nvim_sock_opt, po::value<std::string>(), "neovim socket (defaults to $NVIM)")
+    (loglevel_opt, po::value<std::string>(), loglevel_msg.c_str())
+  ;
+  // clang-format on
 
   return desc;
 }
@@ -72,41 +83,43 @@ std::filesystem::path make_singleton_socket_path() {
 
 application_t::application_t(int argc, const char *argv[])
     : options_description_{make_options_description()},
-      cmd_line_{parse_command_line(argc, argv, options_description_)},
-      singleton_socket_{make_singleton_socket_path().string()},
-      nvim_socket_{cmd_line_.count(nvim_sock_opt)
-                       ? cmd_line_.at(nvim_sock_opt).as<std::string>()
-                       : get_nvim_socket()} {}
+      cmd_line_{parse_command_line(argc, argv, options_description_)} {}
 
-int application_t::run() noexcept try {
-  if (cmd_line_.count(help_opt)) {
+int application_t::run() {
+  if (cmd_line_.count("help")) {
     std::cout << options_description_ << std::endl;
     return 0;
   }
 
-  spdlog::info("Using {} neovim socket", nvim_socket_);
+  if (cmd_line_.count(loglevel_opt)) {
+    const auto &loglevel_str = cmd_line_.at(loglevel_opt).as<std::string>();
+    if (!ranges::contains(loglevel_names, loglevel_str)) {
+      throw std::system_error{util::error_t::bad_cmdline_option,
+                              "Unknown loglevel"};
+    }
+    const auto loglevel = spdlog::level::from_str(loglevel_str);
+    spdlog::set_level(loglevel);
+  }
 
-  if (auto c = std::make_unique<mode::singleton_client_t>(singleton_socket_,
-                                                          nvim_socket_);
+  const auto singleton_socket = make_singleton_socket_path().string();
+  const auto nvim_socket = cmd_line_.count(nvim_sock_opt)
+                               ? cmd_line_.at(nvim_sock_opt).as<std::string>()
+                               : get_nvim_socket();
+
+  spdlog::info("Using {} neovim socket", nvim_socket);
+
+  if (auto c = std::make_unique<mode::singleton_client_t>(singleton_socket,
+                                                          nvim_socket);
       c->try_client_mode()) {
     state_ = std::move(c);
   } else {
-    state_ = std::make_unique<mode::monitor_t>(singleton_socket_, nvim_socket_);
+    state_ = std::make_unique<mode::monitor_t>(singleton_socket, nvim_socket);
   }
 
   assert(state_);
 
   state_->run();
   return 0;
-} catch (monitor::util::error_t error) {
-  spdlog::error(monitor::util::error_to_string(error));
-  return static_cast<int>(error);
-} catch (const std::exception &ex) {
-  spdlog::error(ex.what());
-  return static_cast<int>(monitor::util::error_t::unhandled_exception);
-} catch (...) {
-  spdlog::error("Unexpected error");
-  return static_cast<int>(monitor::util::error_t::unexpected_error);
 }
 
 } // namespace monitor::application
