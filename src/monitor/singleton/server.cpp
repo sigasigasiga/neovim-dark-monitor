@@ -8,7 +8,7 @@ server_t::server_t(msg_handler_t &msg_handler,
                    boost::asio::any_io_executor exec,
                    boost::asio::local::stream_protocol::endpoint ep)
     : msg_handler_{msg_handler}, exec_{std::move(exec)}, acceptor_{exec_} {
-  std::filesystem::remove(ep.path(), util::std_ignore_error);
+  std::filesystem::remove(ep.path(), util::ignore_std_error);
 
   acceptor_.open(ep.protocol());
   acceptor_.bind(ep);

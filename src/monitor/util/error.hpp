@@ -8,8 +8,8 @@ namespace monitor::util {
 // TODO: implement my own exception type?
 enum class error_t : int {
   not_nvim_job = 1,
-  unhandled_exception = 2,
-  bad_cmdline_option = 3,
+  bad_cmdline_option = 2,
+  thirdparty_exception = 124,
   unexpected_error = 125
 };
 
@@ -20,8 +20,8 @@ constexpr std::string_view error_to_string(error_t error) {
            "See `--help` or `Job_control` documentation page in neovim";
   }
 
-  case error_t::unhandled_exception: {
-    return "Unhandled exception error";
+  case error_t::thirdparty_exception: {
+    return "Thirdparty exception";
   }
 
   case error_t::bad_cmdline_option: {
@@ -36,18 +36,29 @@ constexpr std::string_view error_to_string(error_t error) {
   __builtin_unreachable(); // FIXME: make it compiler-independent
 }
 
-const std::error_category &monitor_error_category();
-std::error_code make_error_code(error_t error);
+class exception_t : public std::runtime_error {
+public:
+  exception_t(error_t error)
+      : std::runtime_error{static_cast<std::string>(error_to_string(error))},
+        error_{error} {}
+
+  exception_t(error_t error, std::string_view suffix)
+      : std::runtime_error{fmt::format("{}: {}", suffix,
+                                       error_to_string(error))},
+        error_{error} {}
+
+public:
+  error_t code() const noexcept { return error_; }
+
+private:
+  error_t error_;
+};
 
 inline bool is_disconnected(const boost::system::error_code &ec) {
   return ec == boost::asio::error::eof ||
          ec == boost::asio::error::connection_reset;
 }
 
-inline thread_local std::error_code std_ignore_error;
+inline thread_local std::error_code ignore_std_error;
 
 } // namespace monitor::util
-
-template <>
-struct std::is_error_code_enum<monitor::util::error_t> : public std::true_type {
-};

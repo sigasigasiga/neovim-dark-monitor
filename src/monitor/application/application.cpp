@@ -79,6 +79,16 @@ std::filesystem::path make_singleton_socket_path() {
   return make_runtime_path() / make_singleton_socket_filename();
 }
 
+void set_loglevel(const std::string &loglevel_str) {
+  if (!ranges::contains(loglevel_names, loglevel_str)) {
+    throw util::exception_t{util::error_t::bad_cmdline_option,
+                            "Unknown loglevel"};
+  }
+
+  const auto loglevel = spdlog::level::from_str(loglevel_str);
+  spdlog::set_level(loglevel);
+}
+
 } // anonymous namespace
 
 application_t::application_t(int argc, const char *argv[])
@@ -93,12 +103,7 @@ int application_t::run() {
 
   if (cmd_line_.count(loglevel_opt)) {
     const auto &loglevel_str = cmd_line_.at(loglevel_opt).as<std::string>();
-    if (!ranges::contains(loglevel_names, loglevel_str)) {
-      throw std::system_error{util::error_t::bad_cmdline_option,
-                              "Unknown loglevel"};
-    }
-    const auto loglevel = spdlog::level::from_str(loglevel_str);
-    spdlog::set_level(loglevel);
+    set_loglevel(loglevel_str);
   }
 
   const auto singleton_socket = make_singleton_socket_path().string();

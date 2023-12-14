@@ -7,9 +7,12 @@ int main(int argc, const char *argv[]) try {
 } catch (monitor::util::error_t error) {
   spdlog::error(monitor::util::error_to_string(error));
   return static_cast<int>(error);
+} catch (const monitor::util::exception_t &ex) {
+  spdlog::error(ex.what());
+  return static_cast<int>(ex.code());
 } catch (const std::exception &ex) {
   spdlog::error(ex.what());
-  return static_cast<int>(monitor::util::error_t::unhandled_exception);
+  return static_cast<int>(monitor::util::error_t::thirdparty_exception);
 } catch (...) {
   spdlog::error("Unexpected error");
   return static_cast<int>(monitor::util::error_t::unexpected_error);

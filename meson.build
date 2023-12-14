@@ -31,7 +31,6 @@ sources = [
   'src/monitor/singleton/client_handler.cpp',
   'src/monitor/singleton/server.cpp',
 
-  'src/monitor/util/error.cpp',
   'src/monitor/util/inventory.cpp',
 
   'src/monitor/util/asio/endpoint.cpp',
