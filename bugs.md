@@ -1,4 +1,7 @@
-* Make monitor configurable. Should probably invoke some predefined lua-function in neovim (like `on_monitor_dark`, etc)
+* API:
+    - invoke autocommand whenever monitor connects to neovim
+    - invoke autocommand whenever the theme changes
+    - add RPC methods to query current theme
 * Remove singleton server socket file when the program is about to close
 * Check `$XDG_SESSION_TYPE`. If it is equal to `tty`, then do not start anything. That should probably be implemented on Lua side, but it won't hurt to also check that in the program
 * (optional, because Win10 has added support for `AF_UNIX` sockets since like 2018) Add support for IP sockets in singleton client/server implementation

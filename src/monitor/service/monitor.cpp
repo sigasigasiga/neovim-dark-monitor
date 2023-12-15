@@ -6,25 +6,28 @@ namespace {
 
 using appearance_t = monitor_t::notifier_t::appearance_t;
 
-std::array<std::string_view, 1> make_commands(appearance_t appearance) {
-  // TODO: this should be configurable
+std::string_view to_string(appearance_t appearance) {
   switch (appearance) {
   case appearance_t::light: {
-    return {"set background=light | colorscheme dawnfox"};
+    return "light";
   }
 
   case appearance_t::dark: {
-    return {"set background=dark | colorscheme gruvbox"};
+    return "dark";
   }
 
   case appearance_t::unknown: {
-    return {"echo 'neovim-dark-monitor: system appearance is unknown'"};
+    return "unknown";
   }
   }
 }
 
 void update_theme(neovim::client_t &client, appearance_t appearance) {
-  client.send_request("nvim_command", make_commands(appearance));
+  auto tup = std::make_tuple(
+      "User", std::map<std::string, std::string>{
+                  {"pattern", "OnOsThemeChange"},
+                  {"data", static_cast<std::string>(to_string(appearance))}});
+  client.send_request("nvim_exec_autocmds", tup);
 }
 
 } // anonymous namespace
@@ -46,7 +49,7 @@ void monitor_t::reload() {
   }
 
   for (auto &client : neovim_clients_.range()) {
-    update_theme(client, notifier_.query());
+    on_neovim_client(client);
   }
 }
 
@@ -61,6 +64,10 @@ void monitor_t::on_appearance(notifier_t::appearance_t appearance) {
 
 // neovim_client_sig_t signal handlers
 void monitor_t::on_neovim_client(neovim::client_t &client) {
+  // TODO:
+  // 1. register `query` command in neovim
+  // 2. emit `OnDarkMonitorConnected` autocommand
+  // 3. DO NOT call `update_theme`
   update_theme(client, notifier_.query());
 }
 
