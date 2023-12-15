@@ -16,6 +16,7 @@
 // misc
 #include <cassert>
 #include <chrono>
+#include <concepts>
 #include <filesystem>
 #include <functional>
 #include <future>

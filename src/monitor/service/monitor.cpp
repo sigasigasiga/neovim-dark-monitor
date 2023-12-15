@@ -1,5 +1,7 @@
 #include "monitor/service/monitor.hpp"
 
+#include "monitor/neovim/proto/nvim_exec_autocmds.hpp"
+
 namespace monitor::service {
 
 namespace {
@@ -22,12 +24,18 @@ std::string_view to_string(appearance_t appearance) {
   }
 }
 
+struct autocmds_options_t {
+  std::string_view pattern;
+  std::string_view data;
+
+  MSGPACK_DEFINE_MAP(pattern, data);
+};
+
 void update_theme(neovim::client_t &client, appearance_t appearance) {
-  auto tup = std::make_tuple(
-      "User", std::map<std::string, std::string>{
-                  {"pattern", "OnOsThemeChange"},
-                  {"data", static_cast<std::string>(to_string(appearance))}});
-  client.send_request("nvim_exec_autocmds", tup);
+  const autocmds_options_t options{.pattern = "OnOsThemeChange",
+                                   .data = to_string(appearance)};
+
+  client.send_request(neovim::proto::nvim_exec_autocmds_t{"User", options});
 }
 
 } // anonymous namespace
