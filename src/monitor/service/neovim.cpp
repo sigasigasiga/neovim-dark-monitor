@@ -17,6 +17,15 @@ neovim_t::neovim_t(delegate_t &delegate, client_init_t &client_init,
   clients_.make_job(request_handler_, std::move(current_client));
 }
 
+// util::service_t
+void neovim_t::reload() {
+  if (first_.get()) {
+    for (auto &client : clients()) {
+      client_init_.on_new_client(client);
+    }
+  }
+}
+
 // singleton::server_t::msg_handler_t
 void neovim_t::on_client_msg(msgpack::object_handle handle) {
   auto socket = handle.get().as<std::string>();

@@ -3,6 +3,7 @@
 #include "monitor/rpc/client.hpp"
 #include "monitor/singleton/server.hpp"
 #include "monitor/util/callback_wrapper.hpp"
+#include "monitor/util/functional.hpp"
 #include "monitor/util/job.hpp"
 #include "monitor/util/service.hpp"
 
@@ -34,6 +35,9 @@ public:
   auto clients() const {
     return clients_.range() | ranges::views::transform(&rpc_client_job_t::get);
   }
+
+private: // util::service_t
+  void reload() final;
 
 private: // singleton::server_t::msg_handler_t
   void on_client_msg(msgpack::object_handle handle) final;
@@ -67,6 +71,8 @@ private:
   boost::asio::any_io_executor exec_;
   util::job_storage_t<rpc_client_job_t> clients_;
   util::signal_ref_t<>::connection_t on_jobs_finished_;
+
+  util::first_flag_t first_;
 };
 
 } // namespace monitor::service
