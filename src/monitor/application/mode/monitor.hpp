@@ -3,14 +3,14 @@
 #include <siga/dark_notify/dark_notify.hpp>
 
 #include "monitor/application/application.hpp"
-#include "monitor/service/monitor.hpp"
 #include "monitor/service/neovim.hpp"
+#include "monitor/service/request_handler.hpp"
 #include "monitor/util/inventory.hpp"
 
 namespace monitor::application::mode {
 
 class monitor_t : public application_t::mode_t,
-                  public service::monitor_t::notifier_t,
+                  public service::request_handler_t::query_t,
                   public service::neovim_t::delegate_t,
                   private util::callback_wrapper_t,
                   private util::scoped_t {
@@ -22,8 +22,7 @@ private: // application_t::mode_t
   void run() final;
 
 private: // service::monitor_t::notifier_t,
-  appearance_t query() final;
-  appearance_sig_t signal() final;
+  service::appearance_t query() final;
 
 private: // service::neovim_t::delegate_t
   void on_jobs_finished() final;
@@ -38,7 +37,7 @@ private:
 
   boost::asio::signal_set signal_set_;
 
-  boost::signals2::signal<void(appearance_t)> on_theme_change_;
+  boost::signals2::signal<void(service::appearance_t)> on_theme_change_;
   util::inventory_t inventory_;
 };
 

@@ -1,15 +1,14 @@
 #pragma once
 
-#include "monitor/util/asio/msgpack_socket_read.hpp"
+#include "monitor/rpc/read.hpp"
 #include "monitor/util/callback_wrapper.hpp"
 #include "monitor/util/job.hpp"
 
 namespace monitor::singleton {
 
-class client_handler_t
-    : public util::job_t,
-      private util::asio::msgpack_socket_read_t<>::delegate_t,
-      private util::callback_wrapper_t {
+class client_handler_t : public util::job_t,
+                         private rpc::read_t<>::delegate_t,
+                         private util::callback_wrapper_t {
 public:
   class msg_handler_t {
   public:
@@ -22,14 +21,14 @@ public:
                    msg_handler_t &msg_handler,
                    boost::asio::generic::stream_protocol::socket client_socket);
 
-private: // util::asio::msgpack_socket_read_t::delegate_t
+private: // rpc::read_t<>::delegate_t
   void on_message_received(msgpack::object_handle handle) final;
   void on_read_error(const boost::system::error_code &ec) final;
 
 private:
   msg_handler_t &msg_handler_;
   boost::asio::generic::stream_protocol::socket client_socket_;
-  util::asio::msgpack_socket_read_t<> reader_;
+  rpc::read_t<> reader_;
 };
 
 } // namespace monitor::singleton

@@ -7,6 +7,9 @@ public:
   inline constexpr static std::string_view method_name = "nvim_exec_autocmds";
 
 public:
+  using response_result_t = msgpack::type::nil_t;
+
+public:
   std::string event;
   Options options;
 

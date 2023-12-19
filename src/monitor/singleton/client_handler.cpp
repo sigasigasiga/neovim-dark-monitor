@@ -1,6 +1,6 @@
 #include "monitor/singleton/client_handler.hpp"
 
-#include "monitor/util/error.hpp"
+#include "monitor/util/asio/error.hpp"
 
 namespace monitor::singleton {
 
@@ -11,13 +11,13 @@ client_handler_t::client_handler_t(
       client_socket_{std::move(client_socket)}, reader_{*this, client_socket_} {
 }
 
-// util::asio::msgpack_socket_read_t::delegate_t
+// rpc::read_t<>::delegate_t
 void client_handler_t::on_message_received(msgpack::object_handle handle) {
   msg_handler_.on_client_msg(std::move(handle));
 }
 
 void client_handler_t::on_read_error(const boost::system::error_code &ec) {
-  if (util::is_disconnected(ec)) {
+  if (util::asio::is_disconnected(ec)) {
     spdlog::info("client disconnected");
   } else {
     spdlog::error("Client disconnected with an error ({}): {}", ec.value(),

@@ -9,6 +9,7 @@ namespace monitor::util {
 enum class error_t : int {
   not_nvim_job = 1,
   bad_cmdline_option = 2,
+  bad_rpc = 3,
   thirdparty_exception = 124,
   unexpected_error = 125
 };
@@ -26,6 +27,10 @@ constexpr std::string_view error_to_string(error_t error) {
 
   case error_t::bad_cmdline_option: {
     return "Bad command line option";
+  }
+
+  case error_t::bad_rpc: {
+    return "Invalid RPC protocol";
   }
 
   case error_t::unexpected_error: {
@@ -54,9 +59,15 @@ private:
   error_t error_;
 };
 
-inline bool is_disconnected(const boost::system::error_code &ec) {
-  return ec == boost::asio::error::eof ||
-         ec == boost::asio::error::connection_reset;
+inline const char *what(std::exception_ptr ep) {
+  assert(ep);
+  try {
+    std::rethrow_exception(ep);
+  } catch (const std::exception &ex) {
+    return ex.what();
+  } catch (...) {
+    return "Unknown exception";
+  }
 }
 
 inline thread_local std::error_code ignore_std_error;

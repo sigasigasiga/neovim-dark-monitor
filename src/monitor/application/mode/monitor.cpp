@@ -9,7 +9,7 @@ namespace {
 
 auto convert_appearance(
     siga::dark_notify::dark_notify_t::appearance_t appearance) {
-  return static_cast<service::monitor_t::notifier_t::appearance_t>(appearance);
+  return static_cast<service::appearance_t>(appearance);
 }
 
 auto make_socket(boost::asio::any_io_executor exec,
@@ -49,12 +49,14 @@ monitor_t::monitor_t(const std::string &singleton_endpoint,
       inventory_{service::make_inventory(
           io_.get_executor(), singleton_endpoint,
           make_socket(io_.get_executor(), nvim_endpoint),
-          *this, // service::monitor_t::notifier_t
-          *this  // service::neovim_t::delegate_t
-          )} {}
+          *this, // service::request_handler_t::query_t
+          *this, // service::neovim_t::delegate_t
+          on_theme_change_)} {}
 
 // application_t::mode_t
 void monitor_t::run() {
+  // FIXME: if an exception is thrown in the asio event loop, the program will
+  // run forever
   auto io_fut = std::async(std::launch::async, [this] { io_.run(); });
 
   signal_set_.add(SIGINT);
@@ -75,12 +77,10 @@ void monitor_t::run() {
   io_fut.wait();
 }
 
-// service::monitor_t::notifier_t,
-auto monitor_t::query() -> appearance_t {
+// service::request_handler_t::query_t
+service::appearance_t monitor_t::query() {
   return convert_appearance(notifier_->query());
 }
-
-auto monitor_t::signal() -> appearance_sig_t { return on_theme_change_; }
 
 // service::neovim_t::delegate_t
 void monitor_t::on_jobs_finished() {

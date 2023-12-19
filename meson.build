@@ -9,6 +9,7 @@ boost_dep = dependency('boost', modules: ['program_options'])
 spdlog_dep = dependency('spdlog')
 ranges_dep = dependency('range-v3')
 msgpack_dep = dependency('msgpack-cxx')
+tl_expected_dep = dependency('tl-expected')
 
 darknotify_proj = subproject('libdarknotify')
 darknotify_dep = darknotify_proj.get_variable('darknotify_dep')
@@ -20,11 +21,15 @@ sources = [
   'src/monitor/application/mode/monitor.cpp',
   'src/monitor/application/mode/singleton_client.cpp',
 
-  'src/monitor/neovim/client.cpp',
+  'src/monitor/rpc/client.cpp',
+  'src/monitor/rpc/dispatcher.cpp',
+  'src/monitor/rpc/error.cpp',
+  'src/monitor/rpc/message.cpp',
 
   'src/monitor/service/inventory.cpp',
   'src/monitor/service/monitor.cpp',
   'src/monitor/service/neovim.cpp',
+  'src/monitor/service/request_handler.cpp',
   'src/monitor/service/singleton.cpp',
 
   'src/monitor/singleton/client.cpp',
@@ -41,7 +46,7 @@ sources = [
 executable(
   meson.project_name(),
   sources,
-  dependencies: [boost_dep, msgpack_dep, spdlog_dep, ranges_dep, darknotify_dep],
+  dependencies: [boost_dep, msgpack_dep, spdlog_dep, ranges_dep, darknotify_dep, tl_expected_dep],
   include_directories: ['src/'],
   cpp_pch: 'src/shared_pch.hpp'
 )
