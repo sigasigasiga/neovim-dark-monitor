@@ -17,13 +17,13 @@ struct autocmds_options_t {
 };
 
 template <neovim::method Method>
-void ignore_result(neovim::method_response_t<Method> response) {
+void ignore_response(neovim::method_response_t<Method> response) {
   std::ignore = response;
 }
 
 template <neovim::method Method>
 void send_one_way_message(rpc::client_t &client, const Method &method) {
-  neovim::send(client, method, &ignore_result<Method>);
+  neovim::send(client, method, &ignore_response<Method>);
 }
 
 using namespace neovim::proto;

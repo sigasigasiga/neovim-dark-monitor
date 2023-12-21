@@ -41,6 +41,21 @@ private:
   dark_notify_t &notifier_;
 };
 
+class scoped_notifier_stopper_t : private util::scoped_t {
+public:
+  scoped_notifier_stopper_t(siga::dark_notify::dark_notify_t &notifier)
+      : notifier_{notifier} {}
+
+  ~scoped_notifier_stopper_t() {
+    // well, if this method call throws, we don't mind calling `std::terminate`,
+    // because we are about to stop the process anyway
+    notifier_.stop();
+  }
+
+private:
+  siga::dark_notify::dark_notify_t &notifier_;
+};
+
 } // anonymous namespace
 
 monitor_t::monitor_t(const std::string &singleton_endpoint,
@@ -55,9 +70,10 @@ monitor_t::monitor_t(const std::string &singleton_endpoint,
 
 // application_t::mode_t
 void monitor_t::run() {
-  // FIXME: if an exception is thrown in the asio event loop, the program will
-  // run forever
-  auto io_fut = std::async(std::launch::async, [this] { io_.run(); });
+  auto io_fut = std::async(std::launch::async, [this] {
+    scoped_notifier_stopper_t guard{*notifier_};
+    io_.run();
+  });
 
   signal_set_.add(SIGINT);
   signal_set_.add(SIGTERM);

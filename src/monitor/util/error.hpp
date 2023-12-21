@@ -5,7 +5,6 @@ namespace monitor::util {
 // An `error_code_enum` which is used as an application exit code.
 // Ideally, it should be an `error_condition_code` instead of `error_code_enum`,
 // but unfortunately `std::system_error` is not constructible from those.
-// TODO: implement my own exception type?
 enum class error_t : int {
   not_nvim_job = 1,
   bad_cmdline_option = 2,
