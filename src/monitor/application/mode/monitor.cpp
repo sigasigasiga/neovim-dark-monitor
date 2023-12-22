@@ -117,7 +117,9 @@ void monitor_t::handle_signal(const boost::system::error_code &ec,
 
 void monitor_t::stop() {
   if (!inventory_.active()) {
-    spdlog::info("The inventory is already stopping");
+    // This should never happen
+    spdlog::warn("The inventory is already stopping");
+    return;
   }
 
   inventory_.stop([this] {

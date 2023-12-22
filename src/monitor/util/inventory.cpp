@@ -12,11 +12,13 @@ bool inventory_t::active() const {
 }
 
 void inventory_t::reload() {
+  assert(active());
   ranges::for_each(std::get<service_list_t>(state_), &service_t::reload);
   spdlog::info("The inventory was reloaded");
 }
 
 void inventory_t::stop(std::function<void()> callback) {
+  assert(active());
   auto services = std::move(std::get<service_list_t>(state_));
   state_.emplace<stop_t>(exec_, std::move(services), std::move(callback));
 }
@@ -32,7 +34,7 @@ inventory_t::stop_t::stop_t(boost::asio::any_io_executor exec,
 }
 
 void inventory_t::stop_t::stop() {
-  auto stoppable_it =
+  const auto stoppable_it =
       std::ranges::find_if(reversed_services_, [](const auto &svc_ptr) {
         return !!dynamic_cast<const stoppable_service_t *>(svc_ptr.get());
       });
