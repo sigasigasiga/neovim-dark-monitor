@@ -13,11 +13,10 @@ public:
     virtual void job_finished() = 0;
   };
 
-public:
+protected:
   job_t(std::unique_ptr<delegate_t> delegate)
       : delegate_{std::move(delegate)} {}
 
-protected:
   virtual ~job_t() = default;
 
 protected:

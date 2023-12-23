@@ -1,8 +1,10 @@
 #pragma once
 
+#include "monitor/util/scoped.hpp"
+
 namespace monitor::util {
 
-class service_t {
+class service_t : private scoped_t {
 public:
   virtual ~service_t() = default;
 
