@@ -6,14 +6,11 @@ if get_option('buildtype') == 'debug'
 endif
 
 boost_dep = dependency('boost', modules: ['program_options'])
-
 spdlog_dep = dependency('spdlog')
 ranges_dep = dependency('range-v3')
 msgpack_dep = dependency('msgpack-cxx')
 tl_expected_dep = dependency('tl-expected')
-
-darknotify_proj = subproject('libdarknotify')
-darknotify_dep = darknotify_proj.get_variable('darknotify_dep')
+darknotify_dep = subproject('libdarknotify').get_variable('darknotify_dep')
 
 sources = [
   'src/main.cpp',
