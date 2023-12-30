@@ -7,6 +7,7 @@ A [libdarknotify](https://github.com/sigasigasiga/libdarknotify) based neovim pl
 * Windows 10 or newer
 * macOS
 * Linux/FreeBSD/other platforms that support GLib and `org.freedesktop.appearance.color-scheme`
+* WSL
 
 ## Building instructions
 
@@ -33,30 +34,65 @@ ninja -C bin
 
 ## Usage
 
-### TL;DR
+### How does it work?
 
-It is recommended to copy the resulting executable to `~/.config/nvim/rplugin/neovim-dark-monitor`.
+When connected to the `v:servername`, `neovim-dark-monitor` first registers `DarkMonitorQuery` Lua function, then invokes an `OnDarkMonitorConnected` autocommand.
+Then every time the OS theme is changed, the `OnDarkMonitorThemeChange` is invoked.
 
-**NOTE**: `neovim-dark-monitor` only supports sockets, but currently Neovim for Windows opens named pipe instead of `AF_UNIX`, so the call to `serverstart()` is needed before the process start. (_TODO_: add an example)
+### What do I need to do?
+
+It is recommended to copy the resulting executable to `~/.config/nvim/rplugin/neovim-dark-monitor.exe` (an `.exe` extension is needed to make a single config usable for Windows and other systems).
 
 The example of the lua config file:
 ```lua
+local dark_monitor_exe = vim.api.nvim_get_runtime_file('rplugin/neovim-dark-monitor.exe', false)
+if next(dark_monitor_exe) == nil then
+    return
+end
+
+local current_os = vim.loop.os_uname()
 if os.getenv('XDG_SESSION_TYPE') == 'tty' then
     return
 end
 
-local dark_monitor_exe = vim.api.nvim_get_runtime_file('rplugin/neovim-dark-monitor', false)[1]
-if type(dark_monitor_exe) == 'string' then
-    -- It is better to use `vim.system` on neovim version 0.10+
-    local run_cmd = string.format('call jobstart("%s", {"detach": v:true, "stdin": "null"})', dark_monitor_exe)
-    vim.cmd(run_cmd)
+-- Currently Neovim on Windows spawns a named pipe instead of a regular socket on startup,
+-- but `neovim-dark-monitor` doesn't support them.
+--
+-- This is a subject to change on the Neovim side, because Windows has added a support
+-- for `AF_UNIX` sockets since 2018 (more info: https://github.com/neovim/neovim/issues/11363 ),
+-- but currently we have to work this around by spawning an IP socket manually.
+--
+-- Under WSL we need to run the Win32 executable to make it actually work, but Win32 applications
+-- cannot connect to the UNIX sockets that are spawned in the VM, so we also have to spawn an IP socket
+local is_windows_pipes = current_os.sysname:find('Windows') and vim.v.servername:find('\\\\.\\pipe') == 1
+local is_wsl = current_os.release:find('WSL')
+if is_windows_pipes or is_wsl then
+    local server = '127.0.0.1:0' -- the port will be chosen arbitrarily
+
+    -- When we call `serverstart`, the new server socket is added to the end of
+    -- the `serverlist()` and there's no way to do that the other way.
+    --
+    -- At the same time, `v:servername` is always equal to the first element in
+    -- the list, so unfortunately we have to stop the old server and spawn
+    -- a new one just because we need it to come first in the list.
+    assert(#vim.fn.serverlist() == 1, 'More than one RPC server has been started')
+    vim.fn.serverstop(vim.v.servername)
+    vim.fn.serverstart(server)
 end
+
+assert(#dark_monitor_exe == 1)
+-- It is better to use `vim.system` on neovim version 0.10+
+local job_id = vim.fn.jobstart(dark_monitor_exe, {
+    detach = true,
+    stdin = nil
+})
+assert(job_id > 0, 'Unable to start the `neovim-dark-monitor` job')
 
 local set_theme = function(theme)
     if theme == 'dark' then
-        -- PLACE YOUR HANDLERS HERE
+        -- PUT YOUR HANDLERS HERE
     elseif theme == 'light' then
-        -- PLACE YOUR HANDLERS HERE
+        -- PUT YOUR HANDLERS HERE
     else
         vim.print(string.format('neovim-dark-monitor: Theme is unknown (%s)', tostring(theme)))
     end
@@ -80,11 +116,6 @@ vim.api.nvim_create_autocmd('User', {
 })
 ```
 
-### Full manual
-
-When connected to the `v:servername`, the `neovim-dark-monitor` first registers `DarkMonitorQuery` Lua function, then invokes `OnDarkMonitorConnected` autocommand.
-Then every time the OS theme is changed, the `OnDarkMonitorThemeChange` is invoked.
-
 ## Comparing `neovim-dark-monitor` to other implementations
 
 ### [vim-lumen](https://github.com/vimpostor/vim-lumen)
@@ -95,7 +126,7 @@ Its pros:
 
 Its cons:
 * For each new vim instance it spawns another process which monitors the system theme, whereas `neovim-dark-monitor` can control all the instances within a single process
-* It doesn't provide an ability to query current theme in any time
+* It doesn't provide an ability to query current theme at any time
 * It is written in vimscript, so it should be a bit slower (but you probably won't notice that anyway though)
 
 ### [auto-dark-mode.nvim](https://github.com/f-person/auto-dark-mode.nvim)
