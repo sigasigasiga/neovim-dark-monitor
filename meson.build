@@ -42,7 +42,7 @@ sources = [
 ]
 
 executable(
-  meson.project_name(),
+  'neovim-dark-monitor.exe',
   sources,
   dependencies: [boost_dep, msgpack_dep, spdlog_dep, ranges_dep, darknotify_dep, tl_expected_dep],
   include_directories: ['src/'],
