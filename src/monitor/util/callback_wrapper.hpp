@@ -1,17 +1,13 @@
 #pragma once
 
+#include "monitor/util/scoped.hpp"
+
 namespace monitor::util {
 
-class callback_wrapper_t {
+class callback_wrapper_t : private move_only_t {
 public:
   callback_wrapper_t() : cancelled_{std::make_shared<bool>(false)} {}
   ~callback_wrapper_t() { cancel(); }
-
-  callback_wrapper_t(const callback_wrapper_t &) = default;
-  callback_wrapper_t &operator=(const callback_wrapper_t &) = default;
-
-  callback_wrapper_t(callback_wrapper_t &&) = default;
-  callback_wrapper_t &operator=(callback_wrapper_t &&) = default;
 
 private:
   template <typename F> class wrap_t;
@@ -20,7 +16,12 @@ public:
   template <typename F> wrap_t<F> wrap(F func) const {
     return wrap_t{std::move(func), cancelled_};
   }
-  void cancel() { *cancelled_ = true; }
+
+  void cancel() {
+    if (cancelled_) {
+      *cancelled_ = true;
+    }
+  }
 
 private:
   std::shared_ptr<bool> cancelled_;
