@@ -1,10 +1,5 @@
 project('neovim-dark-monitor', 'cpp', default_options : [ 'cpp_std=c++20' ])
 
-if get_option('buildtype') == 'debug'
-  # this line is needed only to fix clangd errors
-  add_project_arguments('-includesrc/shared_pch.hpp', language : 'cpp')
-endif
-
 boost_dep = dependency('boost', modules: ['program_options'])
 spdlog_dep = dependency('spdlog')
 ranges_dep = dependency('range-v3')
