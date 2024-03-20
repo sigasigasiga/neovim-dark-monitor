@@ -4,7 +4,7 @@
 
 namespace monitor::util {
 
-class callback_wrapper_t : private move_only_t {
+class callback_wrapper_t : private scoped_t {
 public:
   callback_wrapper_t() : cancelled_{std::make_shared<bool>(false)} {}
   ~callback_wrapper_t() { cancel(); }
@@ -17,10 +17,9 @@ public:
     return wrap_t{std::move(func), cancelled_};
   }
 
-  void cancel() {
-    if (cancelled_) {
-      *cancelled_ = true;
-    }
+  void cancel() noexcept {
+    assert(cancelled_);
+    *cancelled_ = true;
   }
 
 private:

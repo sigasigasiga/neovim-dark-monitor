@@ -12,8 +12,7 @@ namespace monitor::application::mode {
 class monitor_t : public application_t::mode_t,
                   public service::request_handler_t::query_t,
                   public service::neovim_t::delegate_t,
-                  private util::callback_wrapper_t,
-                  private util::scoped_t {
+                  private util::callback_wrapper_t {
 public:
   monitor_t(const std::string &singleton_endpoint,
             const std::string &nvim_endpoint);
