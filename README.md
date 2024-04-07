@@ -69,8 +69,8 @@ local rpc_socket = vim.v.servername
 local is_windows_pipes = current_os.sysname:find('Windows') and rpc_socket:find('\\\\.\\pipe') == 1
 local is_wsl = current_os.release:find('WSL')
 if is_windows_pipes or is_wsl then
-    -- start listening on all IP addresses on an arbitrary port
-    rpc_socket = vim.fn.serverstart('0.0.0.0:0')
+    -- start listening on an arbitrary port
+    rpc_socket = vim.fn.serverstart('127.0.0.1:0')
 end
 
 assert(#dark_monitor_exe == 1)
