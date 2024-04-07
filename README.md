@@ -45,15 +45,17 @@ It is recommended to copy the resulting executable to `~/.config/nvim/rplugin/ne
 
 The example of the lua config file:
 ```lua
+if os.getenv('XDG_SESSION_TYPE') == 'tty' then
+    return
+end
+
 local dark_monitor_exe = vim.api.nvim_get_runtime_file('rplugin/neovim-dark-monitor.exe', false)
 if next(dark_monitor_exe) == nil then
     return
 end
 
 local current_os = vim.loop.os_uname()
-if os.getenv('XDG_SESSION_TYPE') == 'tty' then
-    return
-end
+local rpc_socket = vim.v.servername
 
 -- Currently Neovim on Windows spawns a named pipe instead of a regular socket on startup,
 -- but `neovim-dark-monitor` doesn't support them.
@@ -64,25 +66,17 @@ end
 --
 -- Under WSL we need to run the Win32 executable to make it actually work, but Win32 applications
 -- cannot connect to the UNIX sockets that are spawned in the VM, so we also have to spawn an IP socket
-local is_windows_pipes = current_os.sysname:find('Windows') and vim.v.servername:find('\\\\.\\pipe') == 1
+local is_windows_pipes = current_os.sysname:find('Windows') and rpc_socket:find('\\\\.\\pipe') == 1
 local is_wsl = current_os.release:find('WSL')
 if is_windows_pipes or is_wsl then
-    local server = '127.0.0.1:0' -- the port will be chosen arbitrarily
-
-    -- When we call `serverstart`, the new server socket is added to the end of
-    -- the `serverlist()` and there's no way to do that the other way.
-    --
-    -- At the same time, `v:servername` is always equal to the first element in
-    -- the list, so unfortunately we have to stop the old server and spawn
-    -- a new one just because we need it to come first in the list.
-    assert(#vim.fn.serverlist() == 1, 'More than one RPC server has been started')
-    vim.fn.serverstop(vim.v.servername)
-    vim.fn.serverstart(server)
+    -- start listening on all IP addresses on an arbitrary port
+    rpc_socket = vim.fn.serverstart('0.0.0.0:0')
 end
 
 assert(#dark_monitor_exe == 1)
+assert(type(rpc_socket) == 'string')
 -- It is better to use `vim.system` on neovim version 0.10+
-local job_id = vim.fn.jobstart(dark_monitor_exe, {
+local job_id = vim.fn.jobstart({dark_monitor_exe[1], '--nvim-sock', rpc_socket}, {
     detach = true,
     stdin = nil
 })
@@ -90,9 +84,11 @@ assert(job_id > 0, 'Unable to start the `neovim-dark-monitor` job')
 
 local set_theme = function(theme)
     if theme == 'dark' then
-        -- PUT YOUR HANDLERS HERE
+        vim.o.background = 'dark'
+        vim.cmd('colorscheme my_favorite_dark_theme')
     elseif theme == 'light' then
-        -- PUT YOUR HANDLERS HERE
+        vim.o.background = 'light'
+        vim.cmd('colorscheme my_favorite_light_theme')
     else
         vim.print(string.format('neovim-dark-monitor: Theme is unknown (%s)', tostring(theme)))
     end
