@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "monitor/application/mode/monitor.hpp"
 #include "monitor/application/mode/singleton_client.hpp"
